@@ -1,0 +1,65 @@
+# Bytecode / caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.cache/
+.helion_cache/
+*.triton/
+
+# Virtualenvs / local tooling
+.venv/
+venv/
+env/
+.env/
+uv.lock
+uv.*
+.python-version
+
+# Secrets / local env (API keys live in env vars for lctx-bench)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+secrets.*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+
+# Benchmark / experiment outputs
+lctx-bench/runs/
+runs/
+*.csv
+*.parquet
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+wandb/
+lightning_logs/
+
+# Large upstream paper PDF (keep out of git)
+_upstream/assets/paper.pdf
+
+# Notebooks / scratch
+*.ipynb
+dev/
+tmp/
+.tmp/

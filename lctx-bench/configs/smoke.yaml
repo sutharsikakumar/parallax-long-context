@@ -1,0 +1,60 @@
+# Smoke config: a tiny grid that runs end-to-end offline in seconds.
+#
+# Used by `lctx smoke` and by CI. The model is a simulator, not a language model:
+# it produces a *known* degradation curve so the harness, statistics, and figures
+# can be checked against an answer we already know. Never cite these numbers.
+run:
+  name: smoke
+  output_dir: runs
+  # 10 seeds x 3 depths = 30 trials pooled per length. Effective context is
+  # measured on a Wilson *lower* bound, which needs roughly this much evidence
+  # before any length can clear a 0.8 bar at all (see `lctx validate`).
+  n_trials: 10
+  base_seed: 0
+  max_concurrency: 16
+  store_prompts: hash        # keep the smoke run's footprint small
+
+grid:
+  lengths: [1000, 4000, 16000]
+  depths: [0.0, 0.5, 1.0]
+  conditions: [standard, no_haystack, needle_absent]
+  tolerance: 0.02
+
+haystack:
+  source: corpus
+
+stats:
+  ci: 0.95
+  effective_context_threshold: 0.8
+  bootstrap_resamples: 500   # smaller than the default: this run is for speed
+
+models:
+  - name: sim-strong
+    adapter: mock
+    tokenizer: {kind: word}
+    params:
+      behavior: degrading
+      base_accuracy: 0.995
+      half_length: 24000
+      decay_sharpness: 2.5
+      middle_penalty: 0.03
+      task_difficulty: {multi_hop: 0.99, aggregation: 0.985}
+
+  - name: sim-weak
+    adapter: mock
+    tokenizer: {kind: word}
+    params:
+      behavior: degrading
+      base_accuracy: 0.95
+      half_length: 6000
+      decay_sharpness: 2.0
+      middle_penalty: 0.35
+      task_difficulty: {multi_hop: 0.92, aggregation: 0.88}
+
+tasks:
+  - name: single_needle
+    distractor_types: [none, near_duplicate_key]
+  - name: multi_hop
+    params: {chain_length: 3}
+  - name: aggregation
+    params: {num_items: 8, num_offbatch: 8, op: sum}

@@ -1,0 +1,104 @@
+# Hosted API sweep: the full task suite with all control conditions.
+#
+# Replace `model_id` with the models you want to evaluate. Nothing about a model
+# is baked into the harness — adapter, tokenizer, limits and pricing all come
+# from here.
+#
+#   export ANTHROPIC_API_KEY=...   # for the anthropic adapter
+#   export OPENAI_API_KEY=...      # for the openai adapter
+#   lctx validate -c configs/hosted_apis.yaml    # check power before spending
+#   lctx run -c configs/hosted_apis.yaml
+#
+# This grid is large. Read the cost estimate from `lctx validate` first, and note
+# that the run checkpoints after every trial, so `--resume <run_dir>` picks up
+# exactly where an interrupted sweep stopped.
+
+run:
+  name: hosted
+  output_dir: runs
+  # 10 seeds x 5 depths = 50 trials pooled per length. Effective context is
+  # measured on a Wilson lower bound, which needs roughly this much evidence
+  # before any length can clear the 0.8 bar at all.
+  n_trials: 10
+  base_seed: 0
+  max_concurrency: 8
+  requests_per_minute: 200
+  max_retries: 5
+  request_timeout: 900
+  checkpoint: true
+  store_prompts: full        # full reproducibility; use `hash` for very large sweeps
+  skip_over_context_limit: true
+
+grid:
+  lengths: [1000, 4000, 16000, 32000, 64000, 128000]
+  depths: [0.0, 0.25, 0.5, 0.75, 1.0]
+  conditions: [standard, no_haystack, shuffled_haystack, needle_absent]
+  tolerance: 0.02
+
+haystack:
+  source: corpus
+  # Point this at a large plain-text file for realistic filler at long lengths.
+  # The bundled generator recycles ~120 sentence templates, which is fine to
+  # ~32k tokens but becomes repetitive beyond it.
+  corpus_path: null
+
+stats:
+  ci: 0.95
+  effective_context_threshold: 0.8
+  bootstrap_resamples: 2000
+  bootstrap_seed: 12345
+
+judge:
+  # Off by default: every task here has a deterministic scorer. Enable it only
+  # for free-form answers, and always read the agreement report it produces.
+  enabled: false
+  model: null
+  validation_fraction: 0.2
+  min_agreement: 0.9
+
+models:
+  - name: claude-sonnet
+    adapter: anthropic
+    model_id: claude-sonnet-5          # <- replace with the model under test
+    tokenizer:
+      kind: anthropic                  # authoritative counts + calibrated local proxy
+      exact_refine_budget: 4
+    context_limit: 200000
+    max_tokens: 256
+    temperature: 0.0                   # deterministic decoding
+    pricing: {input_per_mtok: 3.0, output_per_mtok: 15.0}
+
+  - name: gpt-compatible
+    adapter: openai
+    model_id: gpt-4.1                  # <- replace with the model under test
+    tokenizer: {kind: tiktoken, encoding: o200k_base}
+    context_limit: 128000
+    max_tokens: 256
+    temperature: 0.0
+    pricing: {input_per_mtok: 2.0, output_per_mtok: 8.0}
+
+  # A locally served model speaks the same protocol — point base_url at it.
+  # - name: local-vllm
+  #   adapter: openai
+  #   model_id: my-org/my-model
+  #   tokenizer: {kind: hf, name_or_path: my-org/my-model}
+  #   params: {base_url: "http://localhost:8000/v1", require_key: false}
+  #   context_limit: 131072
+
+tasks:
+  - name: single_needle
+    distractor_types: [none, near_duplicate_key, semantic_lure, repeated_decoy]
+  - name: multi_needle
+    params: {num_needles: 4}
+    distractor_types: [none, near_duplicate_key]
+  - name: multi_hop
+    params: {chain_length: 4}
+    distractor_types: [none, semantic_lure]
+  - name: aggregation
+    params: {num_items: 12, num_offbatch: 12, op: sum}
+  - name: selective_copy
+    params: {num_matching: 5, num_nonmatching: 15}
+  - name: ordering
+    params: {num_items: 10}
+  - name: negative_retrieval
+    params: {num_present: 8, near_miss: true}

@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lctx-bench"
+version = "0.1.0"
+description = "Rigorous long-context evaluation harness: accuracy vs. context length and information position."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+
+# Lean core: everything needed to run the full pipeline offline with the mock adapter.
+dependencies = [
+    "pydantic>=2.6",
+    "pyyaml>=6.0",
+    "numpy>=1.26",
+    "matplotlib>=3.8",
+]
+
+[project.optional-dependencies]
+anthropic = ["anthropic>=0.40"]
+openai = ["openai>=1.40"]
+tiktoken = ["tiktoken>=0.7"]
+hf = ["transformers>=4.44", "torch>=2.3"]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.23"]
+all = [
+    "anthropic>=0.40",
+    "openai>=1.40",
+    "tiktoken>=0.7",
+    "transformers>=4.44",
+    "torch>=2.3",
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
+
+[project.scripts]
+lctx = "lctx.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+lctx = ["haystack/data/*.txt", "configs/*.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

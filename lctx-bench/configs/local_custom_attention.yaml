@@ -1,0 +1,93 @@
+# Local sweep comparing stock attention against a custom mechanism.
+#
+# This is the config to copy when evaluating a custom attention implementation —
+# a linear / local-linear / covariance-corrected mechanism, a sliding-window or
+# block-sparse variant, or a hand-written Triton or Helion kernel.
+#
+# The two models below are the *same weights* loaded two ways, so any difference
+# in the curves is attributable to the attention mechanism and nothing else.
+# See examples/custom_attention_stub.py for the plug-in code, and the README
+# section "Evaluating a custom attention implementation".
+#
+#   python examples/custom_attention_stub.py      # verify the mechanism first
+#   lctx run -c configs/local_custom_attention.yaml --probes
+
+run:
+  name: custom-attn
+  output_dir: runs
+  n_trials: 10
+  base_seed: 0
+  # One GPU, one request at a time: the models run sequentially anyway, and
+  # concurrent generate() calls on one device only contend for memory.
+  max_concurrency: 1
+  max_retries: 2
+  request_timeout: 1800
+  store_prompts: hash
+  skip_over_context_limit: true
+
+grid:
+  lengths: [1000, 4000, 16000, 32000]
+  depths: [0.0, 0.25, 0.5, 0.75, 1.0]
+  conditions: [standard, no_haystack, needle_absent]
+  tolerance: 0.02
+
+haystack:
+  source: corpus
+
+stats:
+  ci: 0.95
+  effective_context_threshold: 0.8
+  bootstrap_resamples: 2000
+
+models:
+  # -- baseline: stock attention -----------------------------------------
+  - name: baseline
+    adapter: hf
+    model_id: my-org/my-model          # <- replace with your checkpoint
+    tokenizer: {kind: hf}              # defaults to model_id
+    context_limit: 32768
+    max_tokens: 128
+    temperature: 0.0                   # greedy decoding
+    capture_attention: true
+    params:
+      device: cuda
+      dtype: bfloat16
+      # Probes need materialised attention weights, which fused kernels do not
+      # produce. `eager` is slower but is the only way to get them.
+      attn_implementation: eager
+
+  # -- the same weights, custom attention --------------------------------
+  - name: custom-attn
+    adapter: custom_attn
+    model_id: my-org/my-model          # <- same checkpoint as the baseline
+    tokenizer: {kind: hf}
+    context_limit: 32768
+    max_tokens: 128
+    temperature: 0.0
+    capture_attention: true
+    params:
+      device: cuda
+      dtype: bfloat16
+      # Route 1 — register a kernel and select it by name (preferred):
+      register_hook: examples.custom_attention_stub:register
+      attn_implementation: lctx_sliding_window
+      # Route 2 — module surgery instead, if the mechanism changes structure:
+      # attention_patch: examples.custom_attention_stub:patch_model
+      # patch_kwargs: {window: 512}
+      # Route 3 — a complete custom loader, if it is not an AutoModelForCausalLM:
+      # model_loader: examples.custom_attention_stub:load_my_model
+      # loader_kwargs: {checkpoint: /path/to/ckpt.pt}
+
+tasks:
+  - name: single_needle
+    distractor_types: [none, near_duplicate_key]
+  - name: multi_needle
+    params: {num_needles: 4}
+  - name: multi_hop
+    params: {chain_length: 4}
+  - name: aggregation
+    params: {num_items: 12, num_offbatch: 12, op: sum}
+  - name: ordering
+    params: {num_items: 10}
+  - name: negative_retrieval
+    params: {num_present: 8}

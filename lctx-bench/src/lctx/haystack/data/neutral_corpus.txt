@@ -1,0 +1,125 @@
+# Neutral filler sentence templates for lctx-bench.
+# One template per line; {slots} are filled from neutral vocabularies at runtime.
+# Deliberately mundane and topic-free: nothing here should cue, contradict, or
+# resemble any task needle. Lines beginning with '#' are comments.
+The {dept} team published its quarterly summary on the {day} of {month}.
+Attendance at the {dept} review has averaged {n} participants over the last {dur}.
+A revised copy of the {doc} was circulated to the {dept} distribution list.
+The {sys} maintenance window was extended by {n} minutes to allow for verification.
+Staff in the {place} reported that the {doc} had been filed under the previous naming scheme.
+The {role} noted that {pct} percent of submissions arrived before the stated deadline.
+A scheduling conflict moved the {dept} briefing to the following {day}.
+The {sys} dashboard was updated to display totals rather than daily increments.
+Printed copies of the {doc} remain available in the {place} reading room.
+The {role} confirmed that the {dept} archive had been migrated without incident.
+Weekly figures for {month} were consistent with the preceding {dur}.
+The {sys} upgrade introduced a new export format alongside the existing one.
+Requests submitted through the {place} office are processed in the order received.
+The {dept} handbook was reorganised into {n} sections for easier reference.
+A short addendum to the {doc} clarified the retention period for draft material.
+The {role} recommended that routine items be grouped into a single agenda entry.
+Usage of the {sys} portal rose by {pct} percent following the announcement.
+The {dept} inventory count was completed ahead of the {month} deadline.
+Signage in the {place} corridor was replaced during the scheduled closure.
+The {doc} now includes a summary table on its opening page.
+Feedback from the {dept} survey was collated into {n} broad themes.
+The {role} asked that future drafts be submitted in the standard template.
+Network access in the {place} was restored after a {dur} interruption.
+The {sys} logs are retained for {n} days before being summarised and discarded.
+A minor typographical correction was applied to the {doc} on the {day}.
+The {dept} budget submission was acknowledged without further comment.
+Visitors to the {place} are asked to register at the front desk on arrival.
+The {role} circulated a reminder about the {month} reporting cycle.
+Roughly {pct} percent of the {dept} records had already been indexed.
+The {sys} interface was translated into two additional languages.
+Storage allocated to the {doc} series was increased by {n} gigabytes.
+The {dept} calendar was synchronised with the central scheduling service.
+Deliveries to the {place} continue on the usual {day} rotation.
+The {role} observed that response times had stabilised over the past {dur}.
+An index of {doc} revisions is maintained alongside the current version.
+The {sys} backup completed successfully with no warnings recorded.
+Seating in the {place} annexe was rearranged to accommodate {n} additional desks.
+The {dept} mailing list was pruned of inactive addresses in {month}.
+Guidance on formatting was appended to the {doc} for consistency.
+The {role} reported no outstanding items from the previous cycle.
+Approximately {n} queries were resolved without escalation.
+The {sys} notification settings default to a daily digest.
+Lighting in the {place} stairwell is on a {dur} timer.
+The {dept} induction pack was shortened following participant feedback.
+References within the {doc} were checked against the source register.
+The {role} proposed consolidating two overlapping reporting streams.
+Turnout for the {month} session reached {pct} percent of those invited.
+The {sys} search function now supports partial matches.
+Furniture in the {place} was catalogued as part of the routine audit.
+The {dept} contact sheet is reviewed at the start of each {dur}.
+Copies of the {doc} were archived in both electronic and printed form.
+The {role} noted that the {day} slot remained the most heavily booked.
+Around {n} items were transferred to long-term storage during {month}.
+The {sys} help pages were rewritten to remove outdated references.
+Parking near the {place} is limited during the resurfacing work.
+The {dept} reading list was expanded with {n} recent additions.
+An earlier version of the {doc} is retained for comparison.
+The {role} confirmed attendance for the {month} planning meeting.
+Utilisation of meeting rooms in the {place} averaged {pct} percent.
+The {sys} error report is generated automatically each {day}.
+The {dept} filing convention was documented for new staff.
+Catering for the {place} event was adjusted to reflect final numbers.
+The {doc} template was updated to include a version history field.
+The {role} summarised the {dur} of work in a single page.
+Temperature in the {place} server room is logged every {n} minutes.
+The {dept} rota was published {n} weeks in advance.
+Access to the {sys} staging environment is granted on request.
+The {doc} appendix lists the abbreviations used throughout.
+The {role} thanked the {dept} for completing the return on time.
+Recycling collections in the {place} take place each {day}.
+The {sys} licence was renewed for a further {dur}.
+Around {pct} percent of the {dept} forms are now submitted electronically.
+The {doc} cover sheet records the date of the most recent review.
+Bicycle storage at the {place} was expanded to {n} spaces.
+The {dept} noticeboard is cleared at the end of each {month}.
+The {role} circulated the revised {doc} for information only.
+Occupancy of the {place} building peaks mid-week.
+The {sys} audit trail records the identity of each editor.
+The {dept} stationery order was combined with the {place} order.
+A glossary was added to the {doc} at the request of reviewers.
+The {role} noted that {n} items had been carried forward.
+Cleaning of the {place} atrium is scheduled outside working hours.
+The {sys} report defaults to the current {month}.
+The {dept} photographs were re-catalogued with consistent filenames.
+Deliveries arriving after {n} o'clock are held until the next working {day}.
+The {doc} was reformatted to reduce its length by {pct} percent.
+The {role} reminded colleagues to update their contact details.
+Window replacement in the {place} will proceed over the next {dur}.
+The {sys} password policy was aligned with the wider standard.
+Minutes of the {dept} meeting are circulated within {n} working days.
+The {place} lift underwent its routine inspection in {month}.
+The {doc} index was regenerated after the latest additions.
+The {role} noted a {pct} percent reduction in duplicate submissions.
+Signposting between the {place} and the annexe was improved.
+The {sys} timeout was lengthened following user feedback.
+The {dept} spreadsheet was replaced with a shared record.
+Refreshments for the {day} session were arranged in advance.
+The {doc} includes guidance on retaining supporting material.
+The {role} confirmed that the {dur} pilot had concluded.
+Floor coverings in the {place} were replaced in sections.
+The {sys} export now completes in under {n} seconds.
+The {dept} welcomed {n} new members during {month}.
+Correspondence relating to the {doc} is filed by reference number.
+The {role} noted that the {dept} had met its publication target.
+Air handling in the {place} basement is serviced each {dur}.
+The {sys} changelog is published alongside each release.
+The {dept} shared drive was reorganised into {n} top-level folders.
+Notices posted in the {place} are removed after {n} weeks.
+The {doc} was made available in an accessible format.
+The {role} asked that queries be directed to the shared inbox.
+Ventilation testing in the {place} was completed without disruption.
+The {sys} queue is processed continuously throughout the {day}.
+The {dept} training record was verified against the register.
+Approximately {n} pages of the {doc} required no amendment.
+The {role} noted that uptake had risen for a third consecutive {dur}.
+Landscaping around the {place} is maintained under a separate contract.
+The {sys} configuration is reviewed at the start of each {month}.
+The {dept} response was filed alongside the original request.
+Waste collection from the {place} was rescheduled to the {day}.
+The {doc} footnotes were renumbered after the section was moved.
+The {role} recorded that {pct} percent of actions were closed.
