@@ -95,8 +95,14 @@ def plot_heatmap(
     cbar.set_label("accuracy", fontsize=9)
     cbar.outline.set_visible(False)
 
-    n_note = f"n = {int(ns.max())} trials per cell" if ns.max() == ns[ns > 0].min() else \
-             f"n = {int(ns[ns > 0].min())}–{int(ns.max())} trials per cell"
+    nonzero = ns[ns > 0]
+    if nonzero.size == 0:
+        # Every cell errored; the grid exists but carries no observations.
+        n_note = "no successful trials"
+    elif int(ns.max()) == int(nonzero.min()):
+        n_note = f"n = {int(ns.max())} trials per cell"
+    else:
+        n_note = f"n = {int(nonzero.min())}–{int(ns.max())} trials per cell"
     full_sub = " · ".join(x for x in (subtitle, n_note) if x)
     ax.set_title(title, loc="left", pad=14)
     ax.text(0, 1.012, full_sub, transform=ax.transAxes, ha="left", va="bottom",

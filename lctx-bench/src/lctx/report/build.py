@@ -74,7 +74,9 @@ def _integrity_warnings(records: Sequence[TrialRecord], threshold: float) -> lis
     # so it must not drive the power check either.
     pooled = aggregate([r for r in records if r.condition != "no_haystack"], CURVE_KEYS)
     if pooled:
-        min_n = min(s.n for s in pooled if s.n)
+        # default=0 matters: a run where every trial errored has summaries but no
+        # observations, and must not crash the report that explains why.
+        min_n = min((s.n for s in pooled if s.n), default=0)
         if min_n and wilson_interval(min_n, min_n, 0.95).low < threshold:
             need = 1
             while wilson_interval(need, need, 0.95).low < threshold and need < 10_000:

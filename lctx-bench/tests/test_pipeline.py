@@ -212,3 +212,32 @@ def test_grid_size_is_exactly_the_product_of_its_axes(mini_config):
     swept = len(mini_config.grid.lengths) * len(mini_config.grid.depths)
     expected = n_models * n_tasks * n_seeds * (swept + 1)  # +1 for the collapsed ceiling
     assert len(plans) == expected
+
+
+def test_report_survives_a_run_where_everything_errored(mini_config):
+    """A totally failed run must still produce the report that explains why."""
+    from lctx.models.base import ModelAdapter, TransientError
+    from lctx.models.registry import register_adapter
+    from lctx.models.tokenizers import WordTokenizer
+
+    class Dead(ModelAdapter):
+        def __init__(self, name="dead", tokenizer=None, **kw):
+            super().__init__(name, tokenizer or WordTokenizer())
+
+        async def agenerate(self, messages, max_tokens=256, temperature=0.0,
+                            stop=None, trial=None):
+            raise TransientError("provider down")
+
+    register_adapter("dead_for_report", lambda **kw: Dead(**kw))
+    mini_config.models = [
+        mini_config.models[0].model_copy(
+            update={"name": "dead", "adapter": "dead_for_report", "params": {}}
+        )
+    ]
+    mini_config.run.max_retries = 0
+    result = _run(mini_config)
+    assert result.n_errors == len(result.records)
+
+    report = build_report(result.run_dir, mini_config.stats)
+    assert any("errored" in w for w in report.warnings)
+    assert (report.report_dir / "summary.json").exists()
