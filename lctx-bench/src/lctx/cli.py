@@ -42,7 +42,7 @@ def _report(run_dir: Path, cfg: ExperimentConfig | None) -> None:
     if effs:
         _say("\neffective context length (lower CI bound >= threshold):")
         _say(
-            f"  {'model':<16} {'task':<16} {'condition':<15} "
+            f"  {'model':<16} {'task':<19} {'condition':<15} "
             f"{'distractors':<19} {'strict':>9} {'max':>9}"
         )
         for e in effs:
@@ -50,7 +50,7 @@ def _report(run_dir: Path, cfg: ExperimentConfig | None) -> None:
             strict = e["effective_strict"]
             mx = e["effective_max"]
             _say(
-                f"  {k['model']:<16} {k['task']:<16} {k['condition']:<15} "
+                f"  {k['model']:<16} {k['task']:<19} {k['condition']:<15} "
                 f"{k['distractor_type']:<19} "
                 f"{(str(strict) if strict else '—'):>9} {(str(mx) if mx else '—'):>9}"
             )

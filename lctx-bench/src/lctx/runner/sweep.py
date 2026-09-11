@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import random
 import shutil
 import subprocess
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -228,7 +230,7 @@ class Runner:
         mcfg: ModelConfig,
         packer: Packer,
         bucket: TokenBucket,
-        sem: asyncio.Semaphore,
+        pack_pool: Any,
         policy: RetryPolicy,
     ) -> TrialRecord:
         task = get_task(plan.task)
@@ -245,9 +247,12 @@ class Runner:
         inst = task.generate(spec)
 
         # Packing is CPU-bound and can dominate at long contexts; keep it off the
-        # event loop so network calls stay concurrent.
-        packed = await asyncio.to_thread(
-            packer.pack, inst, plan.target_tokens, plan.condition, plan.seed
+        # event loop so network calls stay concurrent, but on a *bounded* pool.
+        # asyncio.to_thread would use the default executor (up to 32 workers),
+        # which for pure-Python tokenization just multiplies GIL contention.
+        loop = asyncio.get_running_loop()
+        packed = await loop.run_in_executor(
+            pack_pool, packer.pack, inst, plan.target_tokens, plan.condition, plan.seed
         )
 
         rec = TrialRecord(
@@ -297,23 +302,22 @@ class Runner:
         )
 
         rng = random.Random(plan.tid)
-        async with sem:
-            await bucket.acquire()
-            result = await call_with_retry(
-                lambda: adapter.agenerate(
-                    packed.messages,
-                    max_tokens=mcfg.max_tokens,
-                    temperature=mcfg.temperature,
-                    stop=mcfg.stop or None,
-                    trial=ctx,
-                ),
-                policy,
-                timeout=self.cfg.run.request_timeout,
-                rng=rng,
-                on_retry=lambda a, e, d: self.progress(
-                    f"  retry {a} for {plan.task}@{plan.target_tokens} in {d:.1f}s: {e}"
-                ),
-            )
+        await bucket.acquire()
+        result = await call_with_retry(
+            lambda: adapter.agenerate(
+                packed.messages,
+                max_tokens=mcfg.max_tokens,
+                temperature=mcfg.temperature,
+                stop=mcfg.stop or None,
+                trial=ctx,
+            ),
+            policy,
+            timeout=self.cfg.run.request_timeout,
+            rng=rng,
+            on_retry=lambda a, e, d: self.progress(
+                f"  retry {a} for {plan.task}@{plan.target_tokens} in {d:.1f}s: {e}"
+            ),
+        )
 
         rec.attempts = result.attempts
         if result.error:
@@ -388,16 +392,29 @@ class Runner:
                     model_plans = keep
 
                 bucket = TokenBucket(self.cfg.run.requests_per_minute)
-                sem = asyncio.Semaphore(max(1, self.cfg.run.max_concurrency))
+                limit = max(1, self.cfg.run.max_concurrency)
+                # The semaphore bounds *whole trials*, not just requests. Packing
+                # a 128k prompt allocates real memory, so letting every planned
+                # trial pack up front would exhaust it long before any model was
+                # called.
+                sem = asyncio.Semaphore(limit)
+                pack_pool = ThreadPoolExecutor(
+                    max_workers=min(limit, (os.cpu_count() or 4)),
+                    thread_name_prefix="lctx-pack",
+                )
 
                 async def one(plan: TrialPlan) -> None:
-                    rec = await self._run_trial(
-                        plan, adapter, mcfg, packer, bucket, sem, policy
-                    )
+                    async with sem:
+                        rec = await self._run_trial(
+                            plan, adapter, mcfg, packer, bucket, pack_pool, policy
+                        )
                     new_records.append(rec)
                     await self._append(rec)
 
-                await asyncio.gather(*(one(p) for p in model_plans))
+                try:
+                    await asyncio.gather(*(one(p) for p in model_plans))
+                finally:
+                    pack_pool.shutdown(wait=True)
             finally:
                 await adapter.aclose()
 

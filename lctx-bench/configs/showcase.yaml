@@ -1,0 +1,67 @@
+# The config that generates the figures in the repository README.
+#
+# Like configs/smoke.yaml it runs against simulators rather than real models, so
+# it is reproducible by anyone with no API key and no GPU — the figures are there
+# to show what the harness *produces*, not to report model results.
+#
+#   lctx run -c configs/showcase.yaml
+#
+# The grid is wider than the smoke grid (6 lengths x 5 depths) so the heatmaps
+# and curves have enough resolution to read.
+
+run:
+  name: showcase
+  output_dir: runs
+  n_trials: 20               # x 5 depths = 100 pooled per length
+  base_seed: 0
+  # These models are simulators with no I/O to overlap, so the work is
+  # CPU-bound prompt packing. Extra threads only contend for the GIL.
+  max_concurrency: 4
+  store_prompts: none        # figures only; no need to keep prompts
+
+grid:
+  lengths: [1000, 2000, 4000, 8000, 16000, 32000]
+  depths: [0.0, 0.25, 0.5, 0.75, 1.0]
+  conditions: [standard, no_haystack, needle_absent]
+  tolerance: 0.02
+
+haystack:
+  source: corpus
+
+stats:
+  ci: 0.95
+  effective_context_threshold: 0.8
+  bootstrap_resamples: 1000
+
+models:
+  - name: sim-strong
+    adapter: mock
+    tokenizer: {kind: word}
+    params:
+      behavior: degrading
+      base_accuracy: 0.995
+      half_length: 28000
+      decay_sharpness: 2.2
+      middle_penalty: 0.10
+      task_difficulty: {multi_hop: 0.98, aggregation: 0.96, negative_retrieval: 0.97}
+
+  - name: sim-weak
+    adapter: mock
+    tokenizer: {kind: word}
+    params:
+      behavior: degrading
+      base_accuracy: 0.97
+      half_length: 7000
+      decay_sharpness: 1.9
+      middle_penalty: 0.30
+      task_difficulty: {multi_hop: 0.85, aggregation: 0.80, negative_retrieval: 0.82}
+
+tasks:
+  - name: single_needle
+    distractor_types: [none, near_duplicate_key, semantic_lure]
+  - name: multi_hop
+    params: {chain_length: 4}
+  - name: aggregation
+    params: {num_items: 12, num_offbatch: 12, op: sum}
+  - name: negative_retrieval
+    params: {num_present: 8}

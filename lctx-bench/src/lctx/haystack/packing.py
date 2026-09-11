@@ -238,7 +238,21 @@ class Packer:
         # Tokens preceding the user content in the rendered request, so needle
         # positions can be reported on the same axis as the total length.
         prefix = self.tok.count_message_tokens([messages[0]])
-        positions = [prefix + self.tok.count_tokens(user[:o]) for o in offsets]
+
+        # Accumulate segment by segment rather than re-tokenizing each prefix:
+        # the naive form is O(needles x length), which dominates packing once a
+        # task places many needles in a long context. Offsets are ascending, so
+        # one pass suffices. Segment-wise counting can differ from a full
+        # re-tokenization by at most one token per preceding cut (tokenizers are
+        # not additive across boundaries) — immaterial against context lengths in
+        # the thousands, and bounded by test_needle_positions_match_exact_count.
+        positions: list[int] = []
+        running = prefix
+        last = 0
+        for o in offsets:
+            running += self.tok.count_tokens(user[last:o])
+            positions.append(running)
+            last = o
 
         within = True
         if tolerance_checked and target_tokens > 0:

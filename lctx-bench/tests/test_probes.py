@@ -130,3 +130,18 @@ def test_probes_are_optional_for_adapters_that_cannot_capture():
     adapter = MockAdapter("sim")
     assert adapter.capture_attention([{"role": "user", "content": "hi"}]) is None
     assert adapter.supports_probes is False
+
+
+def test_facet_grid_lays_panels_out_without_orphans():
+    """Four panels must read as 2x2, not a row of three with one stranded below."""
+    from lctx.report.style import facet_grid
+
+    assert facet_grid(4) == (2, 2)
+    # ...but absorbing an orphan must never cost an extra row.
+    assert facet_grid(7) == (3, 3)
+    for n in range(1, 13):
+        rows, cols = facet_grid(n)
+        assert rows * cols >= n
+        assert cols <= 3
+        # No layout should waste a whole column's worth of cells.
+        assert rows * cols - n < cols

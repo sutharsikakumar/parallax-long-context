@@ -136,11 +136,21 @@ def format_tokens(n: float) -> str:
 
 
 def facet_grid(n: int, max_cols: int = 3) -> tuple[int, int]:
-    """Rows and columns for ``n`` facets."""
+    """Rows and columns for ``n`` facets.
+
+    Avoids a final row holding a single panel — four facets read as 2x2, not as
+    a row of three with one orphan below and a large empty region beside it.
+    """
     if n <= 0:
         return 1, 1
     cols = min(max_cols, n)
     rows = (n + cols - 1) // cols
+    # Drop a column to absorb a lone trailing panel, but only when that does not
+    # cost an extra row (7 facets stay 3x3 rather than becoming a tall 4x2).
+    if cols > 1 and n > cols and n % cols == 1:
+        narrower = cols - 1
+        if (n + narrower - 1) // narrower == rows:
+            cols = narrower
     return rows, cols
 
 

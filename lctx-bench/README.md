@@ -322,7 +322,7 @@ to it automatically.
 ## Tests
 
 ```bash
-pytest                      # ~355 tests, ~25s, fully offline
+pytest                      # 361 tests, ~25s, fully offline
 ```
 
 | Acceptance criterion | Test |

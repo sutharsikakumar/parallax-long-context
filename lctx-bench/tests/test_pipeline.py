@@ -241,3 +241,50 @@ def test_report_survives_a_run_where_everything_errored(mini_config):
     report = build_report(result.run_dir, mini_config.stats)
     assert any("errored" in w for w in report.warnings)
     assert (report.report_dir / "summary.json").exists()
+
+
+def test_concurrency_bound_covers_the_whole_trial(mini_config):
+    """max_concurrency must bound packing too, not just the model call.
+
+    Packing a long prompt allocates real memory; if only the request were
+    bounded, every planned trial would pack up front and a large grid at long
+    context would exhaust memory before any model was called.
+    """
+    import threading
+
+    from lctx.models.base import GenerationResult, ModelAdapter, Usage
+    from lctx.models.registry import register_adapter
+    from lctx.models.tokenizers import WordTokenizer
+
+    state = {"in_flight": 0, "peak": 0}
+    lock = threading.Lock()
+
+    class Counting(ModelAdapter):
+        is_simulator = True
+
+        def __init__(self, name="counting", tokenizer=None, **kw):
+            super().__init__(name, tokenizer or WordTokenizer())
+
+        async def agenerate(self, messages, max_tokens=256, temperature=0.0,
+                            stop=None, trial=None):
+            with lock:
+                state["in_flight"] += 1
+                state["peak"] = max(state["peak"], state["in_flight"])
+            try:
+                await asyncio.sleep(0.005)  # hold the slot open
+                return GenerationResult(text="<answer>x</answer>", usage=Usage(1, 1))
+            finally:
+                with lock:
+                    state["in_flight"] -= 1
+
+    register_adapter("counting", lambda **kw: Counting(**kw))
+    mini_config.models = [
+        mini_config.models[0].model_copy(
+            update={"name": "counting", "adapter": "counting", "params": {}}
+        )
+    ]
+    mini_config.run.max_concurrency = 3
+
+    _run(mini_config)
+    assert state["peak"] <= 3, f"peak concurrency {state['peak']} exceeded the limit of 3"
+    assert state["peak"] > 1, "the sweep did not run concurrently at all"

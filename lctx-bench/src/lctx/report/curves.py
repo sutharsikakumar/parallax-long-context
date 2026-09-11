@@ -171,8 +171,12 @@ def plot_curves(
                            dashes=dashes_for(d) or (1, 0), label=f"distractors: {d}")
                 for d in distractors
             ]
-        fig.legend(handles=handles, loc="lower center",
-                   ncol=min(4, len(handles)), bbox_to_anchor=(0.5, -0.04))
+        # Anchor the legend's *top* below the figure so it grows downward. With
+        # loc="lower center" it grows upward instead and collides with the x-axis
+        # labels whenever the figure is short; savefig(bbox_inches="tight")
+        # expands the canvas to include it either way.
+        fig.legend(handles=handles, loc="upper center",
+                   ncol=min(4, len(handles)), bbox_to_anchor=(0.5, -0.01))
 
     bits = [subtitle]
     if conditions is not None and facet_by != "condition":

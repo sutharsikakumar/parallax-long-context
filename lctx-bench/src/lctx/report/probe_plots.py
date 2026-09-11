@@ -73,8 +73,8 @@ def plot_layer_profiles(rows: Sequence[dict[str, Any]], out_path: Path) -> Path 
 
     handles, labels = axes[0][0].get_legend_handles_labels()
     if len(labels) >= 2:
-        fig.legend(handles, labels, loc="lower center", ncol=min(8, len(labels)),
-                   bbox_to_anchor=(0.5, -0.06), title="context length")
+        fig.legend(handles, labels, loc="upper center", ncol=min(8, len(labels)),
+                   bbox_to_anchor=(0.5, -0.01), title="context length")
 
     h_in = fig.get_size_inches()[1]
     fig.text(0.006, 1 - 0.12 / h_in, "Attention probes by layer", ha="left", va="top",

@@ -170,3 +170,40 @@ def test_needle_appears_exactly_once():
     )
     packed = packer.pack(inst, 8000, "standard", seed=10)
     assert packed.messages[1]["content"].count(inst.needles[0].text) == 1
+
+
+@pytest.mark.parametrize("tok", TOKENIZERS, ids=TOKENIZER_IDS)
+def test_needle_positions_match_exact_count(tok):
+    """Recorded needle positions must match a full re-tokenization.
+
+    Positions are accumulated segment by segment so that packing stays O(length)
+    rather than O(needles x length) — a task with many needles in a long context
+    is otherwise dominated by this one computation. Tokenizers are not additive
+    across concatenation boundaries, so this pins the resulting drift.
+    """
+    packer = Packer(tok, CorpusFiller(), tolerance=TOLERANCE)
+    for name, params in [("single_needle", {}),
+                         ("aggregation", {"num_items": 12, "num_offbatch": 12}),
+                         ("selective_copy", {"num_matching": 5, "num_nonmatching": 15})]:
+        inst = get_task(name).generate(
+            TaskSpec(task=name, seed=1, target_tokens=16_000, depth=0.5,
+                     params=dict(params))
+        )
+        packed = packer.pack(inst, 16_000, "standard", seed=1)
+        user = packed.messages[1]["content"]
+        prefix = tok.count_message_tokens([packed.messages[0]])
+
+        offsets, cursor = [], 0
+        for needle in inst.sorted_needles():
+            idx = user.find(needle.text, cursor)
+            assert idx >= 0, f"{name}: needle missing from the packed prompt"
+            offsets.append(idx)
+            cursor = idx + 1
+        exact = [prefix + tok.count_tokens(user[:o]) for o in offsets]
+
+        drift = max(abs(a - b) for a, b in zip(exact, packed.needle_positions))
+        # Observed drift is 0 for every shipped tokenizer; the bound leaves room
+        # for a tokenizer that merges across a newline.
+        assert drift <= len(offsets), (
+            f"{tok.name}/{name}: needle positions drifted {drift} tokens from exact"
+        )
